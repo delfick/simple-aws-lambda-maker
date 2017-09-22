@@ -115,7 +115,7 @@ class Collector(Collector):
         Hook to do any extra configuration collection or converter registration
         """
         self.register_converters(
-              { (0, ("functions", )): sb.listof(function_spec())
+              { (0, ("functions", )): sb.dictof(sb.string_spec(), sb.listof(function_spec()))
               , (0, ("salm", )): Salm.FieldSpec(formatter=MergedOptionStringFormatter)
               }
             , Meta, configuration, sb.NotSpecified

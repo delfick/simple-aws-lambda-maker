@@ -18,7 +18,7 @@ class App(App):
     cli_categories = ['salm']
     cli_description = "Very simple deployer for python lambdas"
     cli_environment_defaults = {"SALM_CONFIG": ("--salm-config", './salm.yml')}
-    cli_positional_replacements = [('--task', 'help')]
+    cli_positional_replacements = [('--task', 'help'), ('--group', NotSpecified)]
 
     def execute(self, args_obj, args_dict, extra_args, logging_handler, no_docker=False):
         args_dict["salm"]["config"] = args_dict["salm"]["config"](optional=True) or NotSpecified
@@ -33,10 +33,11 @@ class App(App):
             self.setup_logging_theme(logging_handler, colors=collector.configuration["term_colors"])
 
         task = collector.configuration["salm"].task
+        group = collector.configuration["salm"].group
         if task not in available_actions:
             raise NoSuchTask(wanted=task)
         else:
-            available_actions[task](collector)
+            available_actions[task](collector, group=group)
 
     def setup_other_logging(self, args_obj, verbose=False, silent=False, debug=False):
         logging.getLogger("boto3").setLevel([logging.CRITICAL, logging.ERROR][verbose or debug])
@@ -59,6 +60,12 @@ class App(App):
             , help = "The task to run"
             , dest = "salm_task"
             , **defaults["--task"]
+            )
+
+        parser.add_argument("--group"
+            , help = "The group to work on"
+            , dest = "salm_group"
+            , **defaults["--group"]
             )
 
         return parser

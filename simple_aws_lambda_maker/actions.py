@@ -1,6 +1,7 @@
-from simple_aws_lambda_maker.errors import NoFunctionsSpecified
+from simple_aws_lambda_maker.errors import NoFunctionsSpecified, NoSuchGroup, GroupNotSpecified
 from simple_aws_lambda_maker.maker import LambdaMaker
 
+from input_algorithms import spec_base as sb
 from textwrap import dedent
 
 available_actions = {}
@@ -22,10 +23,15 @@ def help(collector, **kwargs):
         print("")
 
 @an_action
-def deploy(collector, **kwargs):
+def deploy(collector, group, **kwargs):
     """Deploy our lambda functions"""
     dry_run = collector.configuration["salm"].dry_run
     functions = collector.configuration["functions"]
-    if not functions:
+    if group is sb.NotSpecified:
+        raise GroupNotSpecified()
+
+    if group not in functions:
+        raise NoSuchGroup(wanted=group)
+    if not functions[group]:
         raise NoFunctionsSpecified()
-    LambdaMaker(collector.configuration["functions"], dry_run=dry_run).fulfill()
+    LambdaMaker(collector.configuration["functions"][group], dry_run=dry_run).fulfill()

@@ -12,6 +12,7 @@ class Salm(dictobj.Spec):
     config = dictobj.Field(sb.file_spec, wrapper=sb.optional_spec)
     dry_run = dictobj.Field(sb.boolean, default=False)
     task = dictobj.Field(sb.string_spec, default="help")
+    group = dictobj.Field(sb.string_spec, wrapper=sb.optional_spec)
 
 class SmartHomeTrigger(dictobj.Spec):
     skill_identifier = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)

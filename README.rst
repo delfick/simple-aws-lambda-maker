@@ -27,30 +27,42 @@ Then create a ``salm.yml`` with something like:
     handler: "lambda_function.lambda_handler"
 
   functions:
-    - name: test
-      region: us-east-1
-      description: "Test function"
-      env:
-        ONE: "1"
-        TWO: "2"
-      tags:
-        three: "four"
+    prod:
+      - name: test
+        region: us-east-1
+        description: "Test function"
+        env:
+          ONE: "1"
+          TWO: "2"
+        tags:
+          three: "four"
 
-    - name: test2
-      region: us-east-1
-      description: "Test function 2"
-      env:
-        ONE: "3"
-        TWO: "4"
-      tags:
-        three: "four"
+      - name: test2
+        region: us-east-1
+        description: "Test function 2"
+        env:
+          ONE: "3"
+          TWO: "4"
+        tags:
+          three: "four"
 
-Here we are creating two functions, one called test and another called test2.
-They are both put into ``us-east-1`` and have different values for the ``ONE``
+    staging:
+      - name: test3
+        region: us-east-1
+        description: "Test function 2"
+        env:
+          ONE: "5"
+          TWO: "6"
+        tags:
+          three: "four"
+
+Here we are creating three functions, called test, test2 and test3.
+
+They are all put into ``us-east-1`` and have different values for the ``ONE``
 and ``TWO`` environment variables.
 
-Both also have the options in the ``function_defaults`` block, which includes
-a reference to a file relative to this file called ``./lambda_function.py``
+All of them also have the options in the ``function_defaults`` block, which
+includes a reference to a file relative to this file called ``./lambda_function.py``
 
 For example:
 
@@ -63,8 +75,10 @@ For example:
 We can then determine if anything will be created or changed by going into that
 directory and saying::
 
-  $ salm deploy --dry-run
+  $ salm deploy staging --dry-run
 
 And then to actually apply those changes::
 
-  $ salm deploy
+  $ salm deploy staging
+
+And to do the prod group, do a ``salm deploy prod``

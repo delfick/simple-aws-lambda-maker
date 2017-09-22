@@ -23,3 +23,9 @@ class NoSuchTask(SalmError):
 
 class NoFunctionsSpecified(SalmError):
     desc = "No functions were found in the configuration"
+
+class NoSuchGroup(SalmError):
+    desc = "Couldn't find specified group"
+
+class GroupNotSpecified(SalmError):
+    desc = "Please specify a group with --group"
