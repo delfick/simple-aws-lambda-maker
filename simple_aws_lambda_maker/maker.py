@@ -140,8 +140,10 @@ class LambdaMaker(object):
                     client.add_permission(**trigger.permissions(arn))
 
     def apply_permissions(self, client, arn, into, old_policy):
+        old_sids = [p["Sid"] for p in old_policy]
         for t in into.triggers:
-            client.add_permission(**t.permissions(arn))
+            if t.sid not in old_sids:
+                client.add_permission(**t.permissions(arn))
 
         new_sids = [t.sid for t in into.triggers]
         for s in old_policy:
