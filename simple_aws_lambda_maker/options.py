@@ -14,17 +14,61 @@ class Salm(dictobj.Spec):
     task = dictobj.Field(sb.string_spec, default="help")
     group = dictobj.Field(sb.string_spec, wrapper=sb.optional_spec)
 
+class SkillTrigger(dictobj.Spec):
+    @property
+    def sid(self):
+        return "alexa_skill"
+
+    @property
+    def principal(self):
+        return "alexa-appkit.amazon.com"
+
+    def policy_statement(self, arn):
+        sid = self.sid
+        effect = "Allow"
+        principal = {"Service": self.principal}
+        action = "lambda:InvokeFunction"
+        ret = {"Sid": sid, "Effect": effect, "Principal": principal, "Action": action}
+        if arn is not None:
+            ret["Resource"] = arn
+        return ret
+
+    def permissions(self, arn):
+        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal}
+
 class SmartHomeTrigger(dictobj.Spec):
+    sid = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
     skill_identifier = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
+
+    @property
+    def principal(self):
+        return "alexa-connectedhome.amazon.com"
+
+    def policy_statement(self, arn):
+        sid = self.sid
+        effect = "Allow"
+        principal = {"Service": self.principal}
+        action = "lambda:InvokeFunction"
+        condition = {"StringEquals": {"lambda:EventSourceToken": self.skill_identifier}}
+        ret = {"Sid": sid, "Effect": effect, "Principal": principal, "Action": action, "Condition": condition}
+        if arn is not None:
+            ret["Resource"] = arn
+        return ret
+
+    def permissions(self, arn):
+        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal, "EventSourceToken": self.skill_identifier}
 
 class trigger_spec(sb.Spec):
     def __init__(self):
+        self.skill_trigger_spec = SkillTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
         self.smart_home_trigger_spec = SmartHomeTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
 
     def normalise_filled(self, meta, val):
-        typ = sb.set_options(type=sb.required(sb.string_choice_spec(["alexa_smart_home"]))).normalise(meta, val)["type"]
+        typ = sb.set_options(type=sb.required(sb.string_choice_spec(["alexa_skill", "alexa_smart_home"]))).normalise(meta, val)["type"]
         if typ == "alexa_smart_home":
             return self.smart_home_trigger_spec.normalise(meta, val)
+        elif typ == "alexa_skill":
+            return self.skill_trigger_spec.normalise(meta, val)
 
 class Function(dictobj.Spec):
     filepath = dictobj.Field(format_into=sb.filename_spec, wrapper=sb.required)
@@ -52,6 +96,9 @@ class Function(dictobj.Spec):
                 with zipfile.ZipFile(fle.name, "w") as zf:
                     zf.write(code.name, os.path.basename(self.filepath))
             yield fle.name
+
+    def policy_statement(self, arn):
+        return [t.policy_statement(arn) for t in self.triggers]
 
     @property
     def configuration(self):
