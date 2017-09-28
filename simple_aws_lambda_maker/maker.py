@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from contextlib import contextmanager
 import subprocess
 import itertools
+import datadiff
 import requests
 import tempfile
 import zipfile
@@ -165,7 +166,11 @@ class LambdaMaker(object):
             if key not in frm:
                 print("+ {0} = {1}".format(key, printed(val)))
             elif frm[key] != val:
-                print("M {0}\n\tWAS = {1}\n\tINTO = {2}".format(key, printed(frm[key]), printed(val)))
+                if type(frm[key]) is str or type(val) is str:
+                    print("M {0}\n\t- {1}\n\t+ {2}".format(key, frm[key], val))
+                else:
+                    diff = str(datadiff.diff(frm[key], val, fromfile="Existing", tofile="Updated"))
+                    print("M {0}\n\t{1}".format(key, "\n\t".join(line for line in diff.split("\n"))))
 
         for key, val in frm.items():
             if key not in into:

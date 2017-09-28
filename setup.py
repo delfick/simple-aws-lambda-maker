@@ -13,6 +13,7 @@ setup(
       , "input_algorithms==0.6.0"
 
       , "boto3==1.4.7"
+      , "datadiff==2.0.0"
       , "PyYaml==3.12"
       , "requests==2.18.4"
       ]
