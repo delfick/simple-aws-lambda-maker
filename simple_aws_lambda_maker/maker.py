@@ -91,6 +91,16 @@ class LambdaMaker(object):
             else:
                 raise
 
+        old_by_sid = {p["Sid"]: p for p in old_policy}
+        for p in new_policy:
+            sid = p["Sid"]
+            if sid in old_by_sid and old_by_sid[sid] != p:
+                log.warning(lc("A policy changes details but keeps the same sid. This means the change will be ignored"
+                    , arn = existing['FunctionArn']
+                    , sid = sid
+                    )
+                )
+
         code_difference = ""
         with into.code_options() as code:
             location = client.get_function(FunctionName=into.name)["Code"]["Location"]
