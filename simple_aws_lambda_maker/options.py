@@ -58,14 +58,39 @@ class SmartHomeTrigger(dictobj.Spec):
     def permissions(self, arn):
         return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal, "EventSourceToken": self.skill_identifier}
 
+class GatewayTrigger(dictobj.Spec):
+    sid = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
+    gateway_identifier = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
+
+    @property
+    def principal(self):
+        return "apigateway.amazonaws.com"
+
+    def policy_statement(self, arn):
+        sid = self.sid
+        effect = "Allow"
+        principal = {"Service": self.principal}
+        action = "lambda:InvokeFunction"
+        condition = {'ArnLike': {'AWS:SourceArn': self.gateway_identifier}}
+        ret = {"Sid": sid, "Effect": effect, "Principal": principal, "Action": action, "Condition": condition}
+        if arn is not None:
+            ret["Resource"] = arn
+        return ret
+
+    def permissions(self, arn):
+        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal, "SourceArn": self.gateway_identifier}
+
 class trigger_spec(sb.Spec):
     def __init__(self):
+        self.gateway_trigger_spec = GatewayTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
         self.skill_trigger_spec = SkillTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
         self.smart_home_trigger_spec = SmartHomeTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
 
     def normalise_filled(self, meta, val):
-        typ = sb.set_options(type=sb.required(sb.string_choice_spec(["alexa_skill", "alexa_smart_home"]))).normalise(meta, val)["type"]
-        if typ == "alexa_smart_home":
+        typ = sb.set_options(type=sb.required(sb.string_choice_spec(["alexa_skill", "alexa_smart_home", "gateway"]))).normalise(meta, val)["type"]
+        if typ == "gateway":
+            return self.gateway_trigger_spec.normalise(meta, val)
+        elif typ == "alexa_smart_home":
             return self.smart_home_trigger_spec.normalise(meta, val)
         elif typ == "alexa_skill":
             return self.skill_trigger_spec.normalise(meta, val)
