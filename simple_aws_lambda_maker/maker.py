@@ -83,12 +83,12 @@ class LambdaMaker(object):
         new_tags = into.configuration["Tags"]
         old_tags = client.list_tags(Resource=existing['FunctionArn'])["Tags"]
 
-        new_policy = into.policy_statement(existing['FunctionArn'])
+        new_policy = sorted(into.policy_statement(existing['FunctionArn']), key=lambda p: p["Sid"])
         try:
-            old_policy = json.loads(client.get_policy(FunctionName=existing['FunctionArn'])["Policy"]).get("Statement")
+            old_policy = sorted(json.loads(client.get_policy(FunctionName=existing['FunctionArn'])["Policy"]).get("Statement"), key=lambda p: p["Sid"])
         except ClientError as error:
             if hasattr(error, "response") and error.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
-                old_policy = {}
+                old_policy = []
             else:
                 raise
 
