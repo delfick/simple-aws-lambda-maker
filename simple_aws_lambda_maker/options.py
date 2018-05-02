@@ -6,6 +6,7 @@ from option_merge import MergedOptions
 from contextlib import contextmanager
 import tempfile
 import zipfile
+import shutil
 import os
 
 class Salm(dictobj.Spec):
@@ -96,7 +97,8 @@ class trigger_spec(sb.Spec):
             return self.skill_trigger_spec.normalise(meta, val)
 
 class Function(dictobj.Spec):
-    filepath = dictobj.Field(format_into=sb.filename_spec, wrapper=sb.required)
+    filepath = dictobj.Field(format_into=sb.filename_spec, wrapper=sb.optional_spec)
+    zippath = dictobj.Field(format_into=sb.directory_spec, wrapper=sb.optional_spec)
     region = dictobj.Field(format_into=sb.string_spec, wrapper=sb.required)
     name = dictobj.Field(format_into=sb.string_spec, wrapper=sb.required)
     triggers = dictobj.Field(sb.listof(trigger_spec()))
@@ -117,10 +119,14 @@ class Function(dictobj.Spec):
     @contextmanager
     def zipfile(self):
         with tempfile.NamedTemporaryFile(suffix=".zip") as fle:
-            with open(self.filepath) as code:
-                with zipfile.ZipFile(fle.name, "w") as zf:
-                    zf.write(code.name, os.path.basename(self.filepath))
-            yield fle.name
+            if self.filepath is not sb.NotSpecified:
+                with open(self.filepath) as code:
+                    with zipfile.ZipFile(fle.name, "w") as zf:
+                        zf.write(code.name, os.path.basename(self.filepath))
+                yield fle.name
+            else:
+                base_name, _ = os.path.splitext(fle.name)
+                yield shutil.make_archive(base_name, "zip", root_dir=self.zippath)
 
     def policy_statement(self, arn):
         return [t.policy_statement(arn) for t in self.triggers]
@@ -146,4 +152,9 @@ class function_spec(sb.Spec):
 
     def normalise_filled(self, meta, val):
         val = MergedOptions.using(meta.everything.get("function_defaults", {}), val)
-        return self.spec.normalise(meta, val)
+        res = self.spec.normalise(meta, val)
+        if res.filepath is sb.NotSpecified and res.zippath is sb.NotSpecified:
+            raise BadSpecValue("Expect either filepath or zippath", meta=meta)
+        if res.filepath is not sb.NotSpecified and res.zippath is not sb.NotSpecified:
+            raise BadSpecValue("Please specify only one of filepath and zippath", meta=meta)
+        return res
