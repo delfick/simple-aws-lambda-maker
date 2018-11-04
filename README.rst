@@ -82,3 +82,12 @@ And then to actually apply those changes::
   $ salm deploy staging
 
 And to do the prod group, do a ``salm deploy prod``
+
+Changelog
+---------
+
+0.1.10 - 5 November 2018
+  * Update requests for CVE-2018-18074
+
+Pre 0.1.10
+  No changelog kept

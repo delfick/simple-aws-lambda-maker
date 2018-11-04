@@ -15,7 +15,7 @@ setup(
       , "boto3==1.4.7"
       , "datadiff==2.0.0"
       , "PyYaml==3.12"
-      , "requests==2.18.4"
+      , "requests==2.20.0"
       ]
 
     , extras_require =
