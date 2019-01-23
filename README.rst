@@ -86,6 +86,9 @@ And to do the prod group, do a ``salm deploy prod``
 Changelog
 ---------
 
+0.2.0 - 23 January 2019
+  * Started using ruamel.yaml instead of PyYaml to load configuration
+
 0.1.10 - 5 November 2018
   * Update requests for CVE-2018-18074
 

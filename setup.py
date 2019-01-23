@@ -14,7 +14,7 @@ setup(
 
       , "boto3==1.4.7"
       , "datadiff==2.0.0"
-      , "PyYaml==3.12"
+      , "ruamel.yaml==0.15.87"
       , "requests==2.20.0"
       ]
 
