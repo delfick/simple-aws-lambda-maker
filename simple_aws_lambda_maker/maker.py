@@ -1,6 +1,5 @@
-from delfick_logging import lc
-
 from botocore.exceptions import ClientError
+from delfick_project.logging import lc
 from contextlib import contextmanager
 import subprocess
 import itertools
@@ -189,7 +188,7 @@ class LambdaMaker(object):
             if key not in frm:
                 print("+ {0} = {1}".format(key, printed(val)))
             elif frm[key] != val:
-                if type(frm[key]) is str or type(val) is str:
+                if isinstance(frm[key], (int, float, str, bytes, bool)):
                     print("M {0}\n\t- {1}\n\t+ {2}".format(key, frm[key], val))
                 else:
                     diff = str(datadiff.diff(frm[key], val, fromfile="Existing", tofile="Updated"))

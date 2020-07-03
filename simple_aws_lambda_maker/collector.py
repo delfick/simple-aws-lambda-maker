@@ -5,13 +5,8 @@ from simple_aws_lambda_maker.formatter import MergedOptionStringFormatter
 from simple_aws_lambda_maker.errors import BadYaml, BadConfiguration
 from simple_aws_lambda_maker.options import Salm, function_spec
 
-from input_algorithms.spec_base import NotSpecified
-from input_algorithms import spec_base as sb
-from input_algorithms.dictobj import dictobj
-from input_algorithms.meta import Meta
-
-from option_merge.collector import Collector
-from option_merge import MergedOptions
+from delfick_project.option_merge import Collector, MergedOptions
+from delfick_project.norms import dictobj, sb, Meta
 
 from ruamel.yaml import YAML
 import ruamel.yaml
@@ -49,7 +44,7 @@ class Collector(Collector):
 
     def find_salm_options(self, configuration, args_dict):
         """Return us all the salm options"""
-        d = lambda r: {} if r in (None, "", NotSpecified) else r
+        d = lambda r: {} if r in (None, "", sb.NotSpecified) else r
         return MergedOptions.using(
             dict(d(configuration.get("salm")).items()), dict(d(args_dict.get("salm")).items())
         ).as_dict()
@@ -124,10 +119,8 @@ class Collector(Collector):
         """
         self.register_converters(
             {
-                (0, ("functions",)): sb.dictof(sb.string_spec(), sb.listof(function_spec())),
-                (0, ("salm",)): Salm.FieldSpec(formatter=MergedOptionStringFormatter),
+                "functions": sb.dictof(sb.string_spec(), sb.listof(function_spec())),
+                "salm": Salm.FieldSpec(formatter=MergedOptionStringFormatter),
             },
-            Meta,
-            configuration,
-            sb.NotSpecified,
+            configuration=configuration,
         )

@@ -7,8 +7,8 @@ from simple_aws_lambda_maker.collector import Collector
 from simple_aws_lambda_maker.errors import NoSuchTask
 from simple_aws_lambda_maker import VERSION
 
-from input_algorithms.spec_base import NotSpecified
-from delfick_app import App, DelayedFileType
+from delfick_project.app import App, OptionalFileType
+from delfick_project.norms import sb
 import logging
 
 log = logging.getLogger("simple_aws_lambda_maker.executor")
@@ -19,13 +19,11 @@ class App(App):
     cli_categories = ["salm"]
     cli_description = "Very simple deployer for python lambdas"
     cli_environment_defaults = {"SALM_CONFIG": ("--salm-config", "./salm.yml")}
-    cli_positional_replacements = [("--task", "help"), ("--group", NotSpecified)]
+    cli_positional_replacements = [("--task", "help"), ("--group", sb.NotSpecified)]
 
     def execute(self, args_obj, args_dict, extra_args, logging_handler, no_docker=False):
-        args_dict["salm"]["config"] = args_dict["salm"]["config"](optional=True) or NotSpecified
-
         config_name = None
-        if args_dict["salm"]["config"] is not NotSpecified:
+        if args_dict["salm"]["config"] is not sb.NotSpecified:
             config_name = args_dict["salm"]["config"].name
 
         collector = Collector()
@@ -48,7 +46,7 @@ class App(App):
         parser.add_argument(
             "--salm-config",
             help="The config file specifying what simple_aws_lambda_maker should care about",
-            type=DelayedFileType("r"),
+            type=OptionalFileType("r"),
             **defaults["--salm-config"]
         )
 

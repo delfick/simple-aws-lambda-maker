@@ -14,9 +14,9 @@ To do this we define the MergedOptionStringFormatter below that uses the magic
 of MergedOptions to do the lookup for us.
 """
 
-from option_merge.formatter import MergedOptionStringFormatter as StringFormatter
+from delfick_project.option_merge.formatter import MergedOptionStringFormatter as StringFormatter
 from simple_aws_lambda_maker.errors import BadOptionFormat
-from input_algorithms.meta import Meta
+from delfick_project.norms import Meta
 
 
 class MergedOptionStringFormatter(StringFormatter):
@@ -63,12 +63,9 @@ class MergedOptionStringFormatter(StringFormatter):
         if type(key) is list and len(key) == 2 and key[0] == "content":
             return self.no_format(self.all_options[key])
 
-        return super(MergedOptionStringFormatter, self).get_string(key)
+        return super().get_string(key)
 
     def special_get_field(self, value, args, kwargs, format_spec=None):
         """Also take the spec into account"""
         if value in self.chain:
             raise BadOptionFormat("Recursive option", chain=self.chain + [value])
-
-    def special_format_field(self, obj, format_spec):
-        """Know about any special formats"""

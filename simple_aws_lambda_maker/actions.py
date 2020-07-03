@@ -1,7 +1,7 @@
 from simple_aws_lambda_maker.errors import NoFunctionsSpecified, NoSuchGroup, GroupNotSpecified
 from simple_aws_lambda_maker.maker import LambdaMaker
 
-from input_algorithms import spec_base as sb
+from delfick_project.norms import sb
 from textwrap import dedent
 
 available_actions = {}

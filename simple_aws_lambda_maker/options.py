@@ -1,9 +1,7 @@
 from simple_aws_lambda_maker.formatter import MergedOptionStringFormatter
 
-from input_algorithms.errors import BadSpecValue
-from input_algorithms import spec_base as sb
-from input_algorithms.dictobj import dictobj
-from option_merge import MergedOptions
+from delfick_project.norms import dictobj, sb, BadSpecValue
+from delfick_project.option_merge import MergedOptions
 from contextlib import contextmanager
 import tempfile
 import zipfile

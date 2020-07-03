@@ -6,17 +6,17 @@ from simple_aws_lambda_maker import VERSION
 setup(
       name = "simple-aws-lambda-maker"
     , version = VERSION
-    , packages = find_packages(include="simple_aws_lambda_maker.*"),
+    , packages = find_packages(include="simple_aws_lambda_maker.*")
+
+    , python_requires = ">= 3.6"
 
     , install_requires =
-      [ "delfick_app==0.9.6"
-      , "option_merge==1.6"
-      , "input_algorithms==0.6.0"
+      [ "delfick_project==0.7.5"
 
-      , "boto3==1.4.7"
+      , "boto3==1.14.16"
       , "datadiff==2.0.0"
-      , "ruamel.yaml==0.15.87"
-      , "requests==2.20.0"
+      , "ruamel.yaml==0.16.10"
+      , "requests==2.24.0"
       ]
 
     , entry_points =
