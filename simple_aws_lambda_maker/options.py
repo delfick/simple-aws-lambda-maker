@@ -9,11 +9,13 @@ import zipfile
 import shutil
 import os
 
+
 class Salm(dictobj.Spec):
     config = dictobj.Field(sb.file_spec, wrapper=sb.optional_spec)
     dry_run = dictobj.Field(sb.boolean, default=False)
     task = dictobj.Field(sb.string_spec, default="help")
     group = dictobj.Field(sb.string_spec, wrapper=sb.optional_spec)
+
 
 class SkillTrigger(dictobj.Spec):
     @property
@@ -35,7 +37,13 @@ class SkillTrigger(dictobj.Spec):
         return ret
 
     def permissions(self, arn):
-        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal}
+        return {
+            "FunctionName": arn,
+            "StatementId": self.sid,
+            "Action": "lambda:InvokeFunction",
+            "Principal": self.principal,
+        }
+
 
 class SmartHomeTrigger(dictobj.Spec):
     sid = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
@@ -51,13 +59,26 @@ class SmartHomeTrigger(dictobj.Spec):
         principal = {"Service": self.principal}
         action = "lambda:InvokeFunction"
         condition = {"StringEquals": {"lambda:EventSourceToken": self.skill_identifier}}
-        ret = {"Sid": sid, "Effect": effect, "Principal": principal, "Action": action, "Condition": condition}
+        ret = {
+            "Sid": sid,
+            "Effect": effect,
+            "Principal": principal,
+            "Action": action,
+            "Condition": condition,
+        }
         if arn is not None:
             ret["Resource"] = arn
         return ret
 
     def permissions(self, arn):
-        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal, "EventSourceToken": self.skill_identifier}
+        return {
+            "FunctionName": arn,
+            "StatementId": self.sid,
+            "Action": "lambda:InvokeFunction",
+            "Principal": self.principal,
+            "EventSourceToken": self.skill_identifier,
+        }
+
 
 class GatewayTrigger(dictobj.Spec):
     sid = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
@@ -72,23 +93,40 @@ class GatewayTrigger(dictobj.Spec):
         effect = "Allow"
         principal = {"Service": self.principal}
         action = "lambda:InvokeFunction"
-        condition = {'ArnLike': {'AWS:SourceArn': self.gateway_identifier}}
-        ret = {"Sid": sid, "Effect": effect, "Principal": principal, "Action": action, "Condition": condition}
+        condition = {"ArnLike": {"AWS:SourceArn": self.gateway_identifier}}
+        ret = {
+            "Sid": sid,
+            "Effect": effect,
+            "Principal": principal,
+            "Action": action,
+            "Condition": condition,
+        }
         if arn is not None:
             ret["Resource"] = arn
         return ret
 
     def permissions(self, arn):
-        return {"FunctionName": arn, "StatementId": self.sid, "Action": "lambda:InvokeFunction", "Principal": self.principal, "SourceArn": self.gateway_identifier}
+        return {
+            "FunctionName": arn,
+            "StatementId": self.sid,
+            "Action": "lambda:InvokeFunction",
+            "Principal": self.principal,
+            "SourceArn": self.gateway_identifier,
+        }
+
 
 class trigger_spec(sb.Spec):
     def __init__(self):
         self.gateway_trigger_spec = GatewayTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
         self.skill_trigger_spec = SkillTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
-        self.smart_home_trigger_spec = SmartHomeTrigger.FieldSpec(formatter=MergedOptionStringFormatter)
+        self.smart_home_trigger_spec = SmartHomeTrigger.FieldSpec(
+            formatter=MergedOptionStringFormatter
+        )
 
     def normalise_filled(self, meta, val):
-        typ = sb.set_options(type=sb.required(sb.string_choice_spec(["alexa_skill", "alexa_smart_home", "gateway"]))).normalise(meta, val)["type"]
+        typ = sb.set_options(
+            type=sb.required(sb.string_choice_spec(["alexa_skill", "alexa_smart_home", "gateway"]))
+        ).normalise(meta, val)["type"]
         if typ == "gateway":
             return self.gateway_trigger_spec.normalise(meta, val)
         elif typ == "alexa_smart_home":
@@ -96,25 +134,34 @@ class trigger_spec(sb.Spec):
         elif typ == "alexa_skill":
             return self.skill_trigger_spec.normalise(meta, val)
 
+
 class Function(dictobj.Spec):
     filepath = dictobj.Field(format_into=sb.filename_spec, wrapper=sb.optional_spec)
     zippath = dictobj.Field(format_into=sb.directory_spec, wrapper=sb.optional_spec)
     region = dictobj.Field(format_into=sb.string_spec, wrapper=sb.required)
     name = dictobj.Field(format_into=sb.string_spec, wrapper=sb.required)
     triggers = dictobj.Field(sb.listof(trigger_spec()))
-    env = dictobj.Field(sb.dictof(sb.string_spec(), sb.formatted(sb.string_spec(), formatter=MergedOptionStringFormatter)))
+    env = dictobj.Field(
+        sb.dictof(
+            sb.string_spec(), sb.formatted(sb.string_spec(), formatter=MergedOptionStringFormatter)
+        )
+    )
     role = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
     timeout = dictobj.Field(format_into=sb.integer_spec(), wrapper=sb.required)
     handler = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
     runtime = dictobj.Field(format_into=sb.string_spec(), wrapper=sb.required)
     description = dictobj.Field(format_into=sb.string_spec(), default="")
     memory_size = dictobj.Field(format_into=sb.integer_spec(), default=128)
-    tags = dictobj.Field(sb.dictof(sb.string_spec(), sb.formatted(sb.string_spec(), formatter=MergedOptionStringFormatter)))
+    tags = dictobj.Field(
+        sb.dictof(
+            sb.string_spec(), sb.formatted(sb.string_spec(), formatter=MergedOptionStringFormatter)
+        )
+    )
 
     @contextmanager
     def code_options(self):
         with self.zipfile() as location:
-            yield {"ZipFile": open(location, 'rb').read()}
+            yield {"ZipFile": open(location, "rb").read()}
 
     @contextmanager
     def zipfile(self):
@@ -134,17 +181,18 @@ class Function(dictobj.Spec):
     @property
     def configuration(self):
         return dict(
-              FunctionName = self.name
-            , Runtime = self.runtime
-            , Role = self.role
-            , Handler = self.handler
-            , Description = self.description
-            , Timeout = self.timeout
-            , MemorySize = self.memory_size
-            , Publish = False
-            , Environment = {"Variables": self.env }
-            , Tags = self.tags
-            )
+            FunctionName=self.name,
+            Runtime=self.runtime,
+            Role=self.role,
+            Handler=self.handler,
+            Description=self.description,
+            Timeout=self.timeout,
+            MemorySize=self.memory_size,
+            Publish=False,
+            Environment={"Variables": self.env},
+            Tags=self.tags,
+        )
+
 
 class function_spec(sb.Spec):
     def __init__(self):

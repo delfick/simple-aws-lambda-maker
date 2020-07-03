@@ -16,12 +16,14 @@ import os
 
 log = logging.getLogger("simple_aws_lambda_maker.maker")
 
+
 def printed(val):
-    dumped = json.dumps(val, sort_keys=True, indent=4).split('\n')
+    dumped = json.dumps(val, sort_keys=True, indent=4).split("\n")
     if len(dumped) == 1:
         return dumped[0]
     else:
         return "\n\t{0}".format("\n\t".join(dumped))
+
 
 @contextmanager
 def a_temp_dir():
@@ -32,6 +34,7 @@ def a_temp_dir():
         if os.path.exists(d):
             shutil.rmtree(d)
 
+
 def extract_zip_contents(contents, directory):
     with tempfile.NamedTemporaryFile() as fle:
         fle.write(contents)
@@ -40,6 +43,7 @@ def extract_zip_contents(contents, directory):
         with zipfile.ZipFile(fle.name) as z:
             z.extractall(path=directory)
 
+
 class LambdaMaker(object):
     def __init__(self, functions, dry_run=False):
         self.functions = functions
@@ -47,7 +51,7 @@ class LambdaMaker(object):
 
     def fulfill(self):
         for region, functions in self.functions_by_region:
-            client = boto3.client('lambda', region_name=region)
+            client = boto3.client("lambda", region_name=region)
             log.info(lc("Finding existing lambda functions", region=region))
             existing = dict(self.find_functions(client))
             for function in functions:
@@ -81,13 +85,21 @@ class LambdaMaker(object):
         old_conf = {k: v for k, v in existing.items() if k in new_conf}
 
         new_tags = into.configuration["Tags"]
-        old_tags = client.list_tags(Resource=existing['FunctionArn'])["Tags"]
+        old_tags = client.list_tags(Resource=existing["FunctionArn"])["Tags"]
 
-        new_policy = sorted(into.policy_statement(existing['FunctionArn']), key=lambda p: p["Sid"])
+        new_policy = sorted(into.policy_statement(existing["FunctionArn"]), key=lambda p: p["Sid"])
         try:
-            old_policy = sorted(json.loads(client.get_policy(FunctionName=existing['FunctionArn'])["Policy"]).get("Statement"), key=lambda p: p["Sid"])
+            old_policy = sorted(
+                json.loads(client.get_policy(FunctionName=existing["FunctionArn"])["Policy"]).get(
+                    "Statement"
+                ),
+                key=lambda p: p["Sid"],
+            )
         except ClientError as error:
-            if hasattr(error, "response") and error.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+            if (
+                hasattr(error, "response")
+                and error.response.get("Error", {}).get("Code") == "ResourceNotFoundException"
+            ):
                 old_policy = []
             else:
                 raise
@@ -96,9 +108,11 @@ class LambdaMaker(object):
         for p in new_policy:
             sid = p["Sid"]
             if sid in old_by_sid and old_by_sid[sid] != p:
-                log.warning(lc("A policy changes details but keeps the same sid. This means the change will be ignored"
-                    , arn = existing['FunctionArn']
-                    , sid = sid
+                log.warning(
+                    lc(
+                        "A policy changes details but keeps the same sid. This means the change will be ignored",
+                        arn=existing["FunctionArn"],
+                        sid=sid,
                     )
                 )
 
@@ -111,10 +125,17 @@ class LambdaMaker(object):
                 extract_zip_contents(code["ZipFile"], directory=os.path.join(parent, "new"))
 
                 # Ideally I'd use python to do this, but it's not straight forward :(
-                p = subprocess.run("diff -u -r ./existing ./new", cwd=parent, shell=True, stdout=subprocess.PIPE)
+                p = subprocess.run(
+                    "diff -u -r ./existing ./new", cwd=parent, shell=True, stdout=subprocess.PIPE
+                )
                 code_difference = p.stdout.decode()
 
-            if new_policy != old_policy or new_tags != old_tags or new_conf != old_conf or code_difference:
+            if (
+                new_policy != old_policy
+                or new_tags != old_tags
+                or new_conf != old_conf
+                or code_difference
+            ):
                 self.print_header("CHANGING FUNCTION: {0}".format(into.name))
                 self.print_difference(new_conf, old_conf)
                 self.print_difference({"Tags": new_tags}, {"Tags": old_tags})
@@ -130,12 +151,14 @@ class LambdaMaker(object):
                 if new_conf != old_conf:
                     client.update_function_configuration(**new_conf)
                 if new_policy != old_policy:
-                    self.apply_permissions(client, existing['FunctionArn'], into, old_policy)
+                    self.apply_permissions(client, existing["FunctionArn"], into, old_policy)
                 if new_tags != old_tags:
                     client.tag_resource(Resource=existing["FunctionArn"], Tags=new_tags)
                     missing = set(old_tags) - set(new_tags)
                     if missing:
-                        client.untag_resource(Resource=existing["FunctionArn"], TagKeys=list(missing))
+                        client.untag_resource(
+                            Resource=existing["FunctionArn"], TagKeys=list(missing)
+                        )
 
     def create(self, client, into):
         self.print_header("NEW FUNCTION: {0}".format(into.name))
@@ -170,7 +193,9 @@ class LambdaMaker(object):
                     print("M {0}\n\t- {1}\n\t+ {2}".format(key, frm[key], val))
                 else:
                     diff = str(datadiff.diff(frm[key], val, fromfile="Existing", tofile="Updated"))
-                    print("M {0}\n\t{1}".format(key, "\n\t".join(line for line in diff.split("\n"))))
+                    print(
+                        "M {0}\n\t{1}".format(key, "\n\t".join(line for line in diff.split("\n")))
+                    )
 
         for key, val in frm.items():
             if key not in into:

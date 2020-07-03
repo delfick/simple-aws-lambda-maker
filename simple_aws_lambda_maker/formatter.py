@@ -18,6 +18,7 @@ from option_merge.formatter import MergedOptionStringFormatter as StringFormatte
 from simple_aws_lambda_maker.errors import BadOptionFormat
 from input_algorithms.meta import Meta
 
+
 class MergedOptionStringFormatter(StringFormatter):
     """
     Resolve format options into a MergedOptions dictionary
@@ -47,12 +48,13 @@ class MergedOptionStringFormatter(StringFormatter):
 
     For this to work, the object must be a subclass of dict and in the dont_prefix option of the configuration.
     """
+
     def get_string(self, key):
         """Get a string from all_options"""
         if key not in self.all_options:
             kwargs = {}
             if len(self.chain) > 1:
-                kwargs['source'] = Meta(self.all_options, self.chain[-2]).source
+                kwargs["source"] = Meta(self.all_options, self.chain[-2]).source
             raise BadOptionFormat("Can't find key in options", key=key, chain=self.chain, **kwargs)
 
         # Make sure we special case the "content" option

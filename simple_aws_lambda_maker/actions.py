@@ -6,9 +6,11 @@ from textwrap import dedent
 
 available_actions = {}
 
+
 def an_action(func):
     available_actions[func.__name__] = func
     return func
+
 
 @an_action
 def help(collector, **kwargs):
@@ -21,6 +23,7 @@ def help(collector, **kwargs):
         print("----{0}".format("-" * len(name)))
         print("\n".join("\t{0}".format(line) for line in dedent(action.__doc__).split("\n")))
         print("")
+
 
 @an_action
 def deploy(collector, group, **kwargs):
