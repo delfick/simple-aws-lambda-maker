@@ -1,5 +1,6 @@
 from simple_aws_lambda_maker.formatter import MergedOptionStringFormatter
 
+from input_algorithms.errors import BadSpecValue
 from input_algorithms import spec_base as sb
 from input_algorithms.dictobj import dictobj
 from option_merge import MergedOptions
