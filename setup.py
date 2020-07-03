@@ -1,11 +1,12 @@
 from setuptools import setup, find_packages
 from simple_aws_lambda_maker import VERSION
 
+# fmt: off
+
 setup(
       name = "simple-aws-lambda-maker"
     , version = VERSION
-    , packages = ['simple_aws_lambda_maker'] + ['simple_aws_lambda_maker.%s' % pkg for pkg in find_packages('simple_aws_lambda_maker')]
-    , include_package_data = True
+    , packages = find_packages(include="simple_aws_lambda_maker.*"),
 
     , install_requires =
       [ "delfick_app==0.9.6"
@@ -18,15 +19,6 @@ setup(
       , "requests==2.20.0"
       ]
 
-    , extras_require =
-      { "tests":
-        [ "noseOfYeti>=1.7"
-        , "nose"
-        , "mock==1.0.1"
-        , "tox"
-        ]
-      }
-
     , entry_points =
       { 'console_scripts' :
         [ 'salm = simple_aws_lambda_maker.executor:main'
@@ -36,9 +28,11 @@ setup(
     # metadata for upload to PyPI
     , url = "https://github.com/delfick/simple-aws-lambda-maker"
     , author = "Stephen Moore"
-    , author_email = "delfick755@gmail.com"
+    , author_email = "github@delfick.com"
     , description = "Very simple deploy tool for aws lambda"
+    , long_description = open("README.rst").read()
     , license = "MIT"
     , keywords = "aws lambda"
     )
 
+# fmt: on
