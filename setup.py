@@ -16,7 +16,7 @@ setup(
       , "boto3==1.14.16"
       , "datadiff==2.0.0"
       , "ruamel.yaml==0.16.10"
-      , "requests==2.24.0"
+      , "requests==2.31.0"
       ]
 
     , entry_points =
